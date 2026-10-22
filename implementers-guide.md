@@ -107,6 +107,7 @@ Each of these has cost real implementations time. They are listed roughly by how
 ### Vehicles
 
 - **Redirecting a guppy mid-leg.** The replaced leg is never reported, and leg counting falls apart.
+- **Sending a guppy's next destination to every client when the first report of a leg arrives.** A client whose copy is still flying that leg never reports it, falls a leg behind, and strands the guppy once the faster clients leave. Hold it back and bring it into step like a late joiner ([Part I §7.3](protocol.md#73-late-joiners), [§9.4.1](protocol.md#941-the-guppy)).
 - **Sending a Muncher's dispatch to a client without its create.** That client gets a stray Muncher heading for the city origin.
 - **Sending a Muncher's destination before its create.** It is created at the wrong point.
 - **Removing a Muncher with Remove Entity.** Its id does not fit. Use Destroy Entity.

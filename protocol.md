@@ -589,14 +589,14 @@ A client knows only what it has been sent. A client joining a game already in pr
 - **The territory grid** (Block Classes `T`), once. *Confirmed.*
 - **The weather**, as its current state (Ambient `R` subtypes 0 and 2), once, and every change after. *Confirmed for the palette; inferred for rain.*
 
-**Guppies.** Every client counts a guppy's legs by its own Leg Arrived reports (§9.4). A joining client has missed the earlier legs, so it must be brought into step: *confirmed*
+**Guppies.** Every client counts a guppy's legs by its own Leg Arrived reports (§9.4). A client is out of step when it has missed the earlier legs (a joining client), or when it has not yet reported the leg that another client's report has just acted on (§9.4.1). Such a client must be brought into step: *confirmed for a joining client, inferred for the second case*
 
 1. Send the joiner the guppy's create Move Vehicle, at its home corner. If the guppy is still on its create leg, the joiner counts like everyone else, and nothing more is needed.
 2. Otherwise, send the joiner no other Move Vehicle for that guppy until it reports. A destination sent before the create leg is reported replaces it, and is then never reported.
 3. On each report from the joiner: if the guppy has moved on since the leg last given to this client, send its **current** destination and wait for the next report. Otherwise the joiner is in step. If the guppy is at home, its next report is the next leg; if in flight, this report is the current leg's arrival.
 4. While a client is being brought into step, its reports drive nothing; the other clients' reports do.
 
-No timers are involved. Without this procedure, a joiner's reports are out of step, and once the original clients leave, the guppy is stranded.
+A client that is out of step but already holds the guppy's create starts at step 2: the leg last given to it is the leg it is still flying. No timers are involved. Without this procedure, a client's reports are out of step, and once the original clients leave, the guppy is stranded.
 
 **Munchers.** A Move Vehicle for a Muncher that a client does not know is a create: it makes a new, stray Muncher that heads for the city origin. So Muncher messages MUST go only to clients that hold its create. Give a joining client its own create and an immediate dispatch, starting where the current leg began, or at the tower itself if the Muncher is eating. From then on, treat that client as a guppy joiner from step 3 above: until it is in step its reports drive nothing; on each report, send it the Muncher's current destination if the Muncher has moved on since the leg last given to it, otherwise it is in step. If the Muncher is eating when the joiner comes into step, send it the Muncher Attack. *Confirmed for a joiner arriving while a Muncher is eating.*
 
@@ -1930,6 +1930,7 @@ A **guppy** is a flying delivery vehicle, created, flown and reported with Move 
 - It is drawn in the color of team `id − 250` (250 Red, 251 Blue, 252 Green, 253 Black).
 - Every client simulates every guppy, so each leg is reported once by every client. The first report of a leg is its arrival; the rest are duplicates.
 - **A server SHOULD NOT redirect a guppy before its current leg is reported**, because a replaced destination is never reported (§8.13). A client's n-th report is then exactly leg n, and no timing is needed.
+- **This holds for each client separately.** The server acts on the first report of a leg, but another client's copy of the guppy may still be flying that leg. A server SHOULD NOT send the next Move Vehicle for a guppy to a client that has not itself reported the leg in flight: the destination replaces the leg, which that client then never reports (§8.13). Its count runs one leg behind from then on, and once the faster clients have left, nothing moves the guppy. Treat such a client as one being brought into step (§7.3): send it nothing, and answer its report with the destination now in force, or send nothing if the guppy is idle at home. *Inferred from §8.13; reproduced with simulated clients at different speeds and latencies, not yet seen with a live client.*
 - Legs from a home corner to a nearby point take 14–27 s. The guppy's speed is unknown.
 
 #### 9.4.2 Orders
@@ -1992,7 +1993,7 @@ A **Muncher** is a flying NPC that eats towers. The manual describes it as neutr
 - Muncher Attack (§8.7) latches it onto a target. *Confirmed.*
 - **The client never damages anything with a Muncher.** Eating a tower, the Muncher's own durability, and its departure are all server-defined.
 - It is removed with Destroy Entity (§8.12); Remove Entity cannot carry its id.
-- Its messages go only to clients holding its create, and a joining client is brought in as described in §7.3.
+- Its messages go only to clients holding its create, and a joining client is brought in as described in §7.3. So is a client whose copy has not yet reported the leg another client's report acted on (§9.4.1).
 
 ### 9.6 Weather
 
