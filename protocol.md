@@ -1442,16 +1442,20 @@ id:b10  cell  x:num  y:num  z:num  orient:num  fwd:b88  fwd_target:b88  v1:num  
 | `state` | 0 on the ground, 1 falling; see below |
 | `weight` | total weight of installed modules (§9.3.1) |
 
-**On receipt.** The client moves its copy of the pod and gives it the stated speed, so that its motion is smooth between updates. *Confirmed.*
+**On receipt.** The client moves its copy of the pod and gives it the stated speed, less 10% (below), so that its motion is smooth between updates. *Confirmed.*
 
 - The client applies `fwd` only when `state` is 0, and treats `v1`/`v2` as vertical speed only when `state` is 1. *Established.*
 - If `state` is 4, the client discards the whole message. *Established.*
 - If the pod is in drop state, the client discards the message (§7.4).
 - If `id` is the receiving client's own pod and `fwd_target` is 0, the client moves its pod to the given position at once and carries on from there. This is the only known way to reposition a player. *Confirmed.*
 
-**Relaying.** When the server forwards a client's Pod State, it sends `state` as 1 if the reported state was 1, and 0 otherwise, including when the reporter is itself still in drop state. `v1` and `v2` are forwarded unchanged: in the client's own reports they are vertical speeds only when the reported state is 1, and turn rates in states 0, 2 and 4, so they always match the relayed state. *Established.* Forwarding `v1`/`v2` under the wrong state makes the pod spin.
+**Relaying.** When the server forwards a client's Pod State, it sends `state` as 1 if the reported state was 1, and 0 otherwise, including when the reporter is itself still in drop state. `v1` and `v2` are forwarded as reported (apart from the optional scaling below): in the client's own reports they are vertical speeds only when the reported state is 1, and turn rates in states 0, 2 and 4, so they always match the relayed state. *Established.* Forwarding `v1`/`v2` under the wrong state makes the pod spin.
 
-**Forward speed is scaled on receipt.** The client multiplies a received `fwd` and `fwd_target` by 0.9 before using them. A server that relays a client's speeds unchanged draws that pod 10% slow on other screens, falling steadily behind its reported positions between updates; it SHOULD divide them by 0.9 before relaying (staying within the `b88` range). *Established.*
+**Speeds are scaled on receipt.** In a message with `state` 0, the client multiplies `fwd`, `fwd_target`, `v1` and `v2` by 0.9 (`0xe666 / 0x10000`, 16.16 fixed point), rounding down: a received value `w` becomes ⌊`w` × `0xe666` / `0x10000`⌋. Vertical speeds (`state` 1) are used unchanged. *Established.*
+
+A server that relays these values unchanged therefore shows other players' pods walking and turning 10% slower than reported between updates, with each update moving them forward to catch up. This is probably intended. Only motion the player controls is damped, and the ballistic fall is not. That points to deliberate under-prediction: when a player stops or turns, the remote copy has not overshot, and the correction is a step forward rather than a pull back. That mattered over a modem. The original server presumably relayed the values unchanged. *Inferred.*
+
+A server MAY undo the scaling by relaying each of the four values as `w` = ⌈`v` × `0x10000` / `0xe666`⌉, which the client turns back into exactly `v`. This must be a true ceiling, rounding toward +∞ for negative `v` too. `round(v / 0.9)` comes out 1 short for about half of all values, and in languages whose integer division truncates, `-((-a) / b)` is not a ceiling. Clamp `fwd` and `fwd_target` to the `b88` range after rounding, so reported speeds of 108–119 ft/s arrive as 107. The client keeps only the low 16 bits of a received turn rate, so clamp turn rates to −32768..32767; above about ±29,490 they cannot be reproduced exactly. The cost is overshoot: a remote pod that stops suddenly runs past the stop and is pulled back at the next update. Nobody has compared the two in play. *Server-defined.*
 
 **Audience:** every client holding the pod (§7.2), except its owner. What a client does with a Pod State naming a pod it has never been introduced to is unknown, so a server sends none.
 
@@ -2022,6 +2026,7 @@ The client was one half of a pair, and the original server owned these decisions
 | **Earned kills and payouts** | Kill Notice (§9.2.8) | the server alone knows every pod's bays |
 | **Progression across sessions** | Score Status and Bay Status, both ways (§9.2.11) | beware stale reports and unreported spending |
 | **Respawn** | the client respawns at its corner when released (§7.5) | answer only the Drop Request after a death |
+| **Relayed motion** | Pod State speeds and turn rates, scaled by 0.9 on receipt (§8.24) | whether to undo the scaling is the server's; use a ceiling if so |
 | **NPC population** | Spawn Sentinel; Move Vehicle for Munchers (§9.5) | nothing in the client schedules NPCs |
 | **Logistics and stock** | orders, replies, the guppy (§9.4) | never redirect a guppy mid-leg |
 | **Module effects** | Effect Requests (§9.3.5) | applied at the sender's last position |

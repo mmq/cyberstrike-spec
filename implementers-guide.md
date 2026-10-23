@@ -88,7 +88,7 @@ Each of these has cost real implementations time. They are listed roughly by how
 - **Relaying turn rates as vertical speed, or the reverse.** The meaning of `v1`/`v2` depends on the state; getting it wrong makes pods spin.
 - **Inferring flight from altitude.** Pods stand on roofs at about 212 ft.
 - **Clamping off-map positions.** A pod outside the city has a negative offset; clamping makes it jump between two places on other screens.
-- **Relaying forward speed unchanged.** The client scales a received speed by 0.9, so other players' pods run 10% slow. Divide by 0.9 before relaying ([§8.24](protocol.md#824-b--pod-state)).
+- **Undoing the 0.9 speed scaling with `round(v / 0.9)`.** The client rounds down, so this delivers 1 less than reported for about half of all values. Use a true ceiling of `v × 0x10000 / 0xe666` ([§8.24](protocol.md#824-b--pod-state)). Relaying unchanged is also valid: pods then run 10% slow between updates, which is probably the original look.
 - **Expecting dead reckoning to do the smoothing.** Smooth motion comes from sending each pod's speed, not just its position.
 
 ### Combat and scoring

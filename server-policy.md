@@ -125,6 +125,7 @@ City B is the default. Every value is configuration; each city may also ban modu
 | Quit | waits up to 10 s for the first `QUIT\r` and 1 s for the second; sends `05 "A\r"` 3 s after the last one seen; closes the connection if none arrives |
 | tags | a sequence number per connection, `0x10` to `0xff`, then back to `0x10`. Acknowledge is used to measure round-trip time |
 | client Pod Flags | not relayed |
+| relayed Pod State speeds | the client's 0.9 scaling is undone: `fwd`, `fwd_target` and, when relaying `state` 0, the turn rates `v1`/`v2` are each sent as ⌈v × `0x10000` / `0xe666`⌉ (a true ceiling), then clamped (`fwd`/`fwd_target` to −120..119, turn rates to −32768..32767), so other pods move at their reported speeds ([Part I §8.24](protocol.md#824-b--pod-state)). *Reason:* on a low-latency link the overshoot after a sudden stop is small. The original server probably relayed unchanged. Not yet compared in play |
 
 ## 8. Entity ids
 
