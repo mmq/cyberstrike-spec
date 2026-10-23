@@ -388,7 +388,8 @@ client: M 1380;3\r             later, when the player presses GO
 - `*` may be sent before or after `<Not Telling!>` arrives. *Before: confirmed. After: inferred.* The `<Not Telling!>` line carries nothing and is ignored.
 - **The first non-empty line is the account line.** The bare CR before it produces an empty line.
 - **The account line** is `NAME,PASSWORD` for any configured name except `JOINGENIE`, and `NAME` alone for `JOINGENIE` (compared without regard to case). *`JOINGENIE` form confirmed; password form inferred.*
-- **The name is set by the player** in the client's configuration. An unmodified installation has `JOINGENIE`, which is probably the name GEnie used for signing up new members rather than one players entered the game with. *Inferred.* Whether a server accepts `JOINGENIE`, and whether it lets more than one connection use the same name, is server-defined (§10).
+- **The name is set by the player** in the client's configuration. It is the player's GEnie login, not a callsign. An unmodified installation has `JOINGENIE`, which is probably the name GEnie used for signing up new members rather than one players entered the game with. *Inferred.* Whether a server accepts `JOINGENIE`, and whether it lets more than one connection use the same name, is server-defined (§10).
+- **The callsign is separate from the account name.** On the original service a player chose a callsign after logging on, and it was tied to their GEnie account; the case the player chose was kept. The client has no step for choosing one: it is told its own callsign in Start Session (§8.4) and other players' in Introduce Pod (§8.9). How a server obtains and assigns callsigns is server-defined (§10). *Server-defined.*
 - `M 1380;3` is the GEnie page command for CyberStrike. It means the player has asked to enter the game.
 
 ### 5.2 The terminal and command mode
@@ -803,7 +804,7 @@ self_id:b10  slot:b10  callsign:str  network:str  city:str  max_mult:b10  tower_
 |---|---|---|
 | `self_id` | the net id of the client's own pod | confirmed |
 | `slot` | `(index << 3) \| team` (§6.3) | confirmed |
-| `callsign` | the player's own callsign | confirmed |
+| `callsign` | the player's own callsign. The roster panel shows 12 characters. Mixed case is shown as sent | confirmed |
 | `network` | network name, shown in the banner | confirmed |
 | `city` | city name, shown in the banner | confirmed |
 | `max_mult` | the city's maximum multiplier; at most 51 (§9.2.6) | established |
@@ -1055,7 +1056,7 @@ id:b10  callsign:str  slot:b10  cell  x:num  y:num  z:num  orient:num  v1:b88  v
 | field | meaning | grade |
 |---|---|---|
 | `id` | the pod's net id | confirmed |
-| `callsign` | the player's name | confirmed |
+| `callsign` | the player's callsign (§8.4) | confirmed |
 | `slot` | `(index << 3) \| team` (§6.3) | confirmed |
 | `cell x y z orient` | position and heading: the pod's last reported Pod State | confirmed |
 | `v1`, `v2` | meaning unknown; send 0 and 0 | unknown |
@@ -2008,6 +2009,7 @@ The client was one half of a pair, and the original server owned these decisions
 | decision | what the client provides | constraint |
 |---|---|---|
 | **Identity** | a name, and a password unless the name is `JOINGENIE` (§5.1) | `JOINGENIE` carries no password; whether a name may be shared is the server's choice |
+| **Callsigns** | nothing: the server sends each player's callsign (§8.4, §8.9) | separate from the account name; how it is chosen is the server's choice; at most 12 characters are shown |
 | **The lobby** | a terminal, line input and buttons (§5.2–5.3) | the reply to a bare `/CITY` must be plain text |
 | **Cities** | three settings in Start Session (§6.4) | maximum multiplier ≤ 51 |
 | **Teams and slots** | four teams, four slots each (§6.3) | slots unique within a city |
