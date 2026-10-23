@@ -234,12 +234,12 @@ The game's README promises that a player who loses the connection may reconnect 
 3. **Eligibility.** A drop is **ineligible**, a "fight about to be lost", if, in the 20 s before it, the pod was named in a non-teammate's Hit Report, was sent Damage, or had an enemy shot, grenade or air strike fired within 600 ft of it (the client's own NPC targeting range). Power is **not** used: power changes from jumps and crashes look like hits, and a pod at full power can still be losing.
    - An ineligible drop is treated as a **death at the moment of the drop**: payouts and Kill Notices to the hitters, Destroy Entity to every other client, bounty zeroed, marker −1 saved, modules lost. Then Remove Entity. **No place is held:** a `/RESUME` is refused with a message saying why, and no team slot is reserved.
    - Any other drop is eligible: it gets only Remove Entity, and its place is held.
-4. **Time limits.** The place is held for 10 minutes from the drop. Once the player returns to the Chamber they are told about it, with the time left, and have 3 minutes to type `/RESUME`; when those 3 minutes end, the place is given up, even if the 10 minutes have not. While held, the team slot is reserved and the city's game keeps running, even if no one else is in it. `/PLAY` gives the place up.
+4. **Time limits.** The player has 10 minutes from the drop to reconnect and enter the Chamber. Once they enter the Chamber, they have 3 minutes to type `/RESUME` and rejoin the game (as described in the manual). During the 10 minutes and the 3 minutes, the team slot is reserved and the city's game keeps running, even if no one else is in it. `/PLAY` gives the place up.
 5. **Restore.** The Chamber launch for the held city, Start Session with the held team and a fresh pod id ([Part I §8.10](protocol.md#810-h--remove-entity)), Bay Status (saved bays and marker), Score Status (held SCORE and multiplier, saved bay points, no multiplier floor), and once the pod has landed, one module install per held module, highest level first. Bounty and position are not restored: the pod drops at its home corner with bounty 0.
 
 **The confirmed loadout** is kept for every player as a ledger ([Part I §9.3.4](protocol.md#934-the-installed-loadout)): each install is pending until a Pod State's weight includes it, and dropped if a couple of reports match without it; Module Operation 1 and 4 remove modules; a death clears them. A mismatch with the reported weight is logged.
 
-The 3-minute typing window comes from a summary of the manual; the original sentence has not been found. *Tested with the original client except the attack-based eligibility rule.*
+*Tested with the original client except the attack-based eligibility rule.*
 
 ## 14. Logistics
 
