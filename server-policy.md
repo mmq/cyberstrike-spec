@@ -23,11 +23,13 @@ Answer the logon script ([Part I §5.1](protocol.md#51-logon)) as follows:
 ## 3. Identity
 
 - **Accounts.** A logon with a password (`NAME,PASSWORD`) is a real account. The first logon with a name registers its password; later logons must match it. A second simultaneous logon with the same account is refused.
-- **Refusing a logon.** In place of the `*` prompt the server sends `PASSWORD: \r\n` and then `INVALID PASSWORD\r\n` (wrong password) or `THAT ACCOUNT IS ALREADY ONLINE\r\n`, and closes the connection.
-  *Reason:* the client offers no sign-up step, so first use registers. A real account is the only identity stable enough to restore a game after a line drop (§13).
-- **Guest accounts** (optional). A configured list of names are guest names. A logon with a guest name is accepted without checking any password (a guest name other than `JOINGENIE` still arrives with one, which is ignored). **Guest names are the only names more than one connection may use at once**: each connection is given its own callsign (below). **Guests have no saved progression** (§11.3). The default configuration lists `JOINGENIE` only; an empty list turns guests off, and a `JOINGENIE` logon is then refused.
+- **New accounts.** A new name is 3 to 12 characters of `A`–`Z`, `0`–`9`, `_` and `-`, and not one the server keeps for itself (such as `ADMIN` or `SERVER`) or one a guest could be given (such as `JOINGENIE2`); its password is 6 to 64 characters. Registration can be turned off, leaving the operator to create accounts. The number of accounts is capped, and an account never played is removed after 30 days.
+- **Wrong passwords.** After five wrong passwords for one account, from any address, that account is refused for a few minutes. The right password afterwards clears the count.
+- **Refusing a logon.** In place of the `*` prompt the server sends one line saying why (for example `WRONG PASSWORD` or `THAT ACCOUNT IS ALREADY LOGGED IN`) and closes the connection. The client displays the line ([Part I §5.1](protocol.md#51-logon)).
+  *Reason:* the client offers no sign-up step, so first use registers. A real account is the only identity stable enough to restore a game after a line drop (§13). The limits exist because the server is open to anyone who can reach it: they keep the account table bounded and make guessing a password slow. *The limits are tested with scripted clients; the refusal line with the original client.*
+- **Guest accounts** (optional). A configured list of names are guest names. A logon with a guest name is accepted without checking any password (a guest name other than `JOINGENIE` still arrives with one, which is ignored). **Guest names are the only names more than one connection may use at once**: each connection is given its own callsign (below). **Guests have no saved progression** (§11.3). The default configuration lists `JOINGENIE` only; an empty list turns guests off, and a `JOINGENIE` logon is then refused. At most 2 guests from one address, and 24 in all, are online at once.
   *Reason:* an unmodified client logs on as `JOINGENIE`, with no password; accepting it as a guest lets someone try the game before configuring a name. Sharing a name is safe only where nothing depends on the name being one person's, which is also why a guest's progress is not kept: its callsign depends on connection order, so a saved record would pass to whoever next took that callsign.
-- **Callsigns** are taken from the account name, since the client has no step for choosing one ([Part I §5.1](protocol.md#51-logon)). They are unique server-wide, upper case, and at most 12 characters: the name, cut to 12. If that callsign is already online, the server tries the name's first 11 characters followed by `2`, then `3`, up to `9`, then its first 10 followed by `10` to `99`, then its first 9 followed by `100` to `999`, and uses the first that is free (`JOINGENIE` plays as `JOINGENIE`, then `JOINGENIE2`, `JOINGENIE3`; `ABCDEFGHIJKL` as `ABCDEFGHIJKL`, then `ABCDEFGHIJK2`, and `ABCDEFGHIJ10` from the tenth). If all are taken, the logon is refused.
+- **Callsigns** are taken from the logon name, since the client has no step for choosing one ([Part I §5.1](protocol.md#51-logon)). They are unique server-wide, upper case, and at most 12 characters. **A real account's callsign is its name**: a new name is at most 12 characters and never one a guest could be given, and guests pass over every registered name. A guest's callsign is its guest name, cut to 12. If that callsign is already online or registered, the server tries the name's first 11 characters followed by `2`, then `3`, up to `9`, then its first 10 followed by `10` to `99`, then its first 9 followed by `100` to `999`, and uses the first that is free (`JOINGENIE` plays as `JOINGENIE`, then `JOINGENIE2`, `JOINGENIE3`; a guest name `ABCDEFGHIJKLM` as `ABCDEFGHIJKL`, then `ABCDEFGHIJK2`, and `ABCDEFGHIJ10` from the tenth). If all are taken, the logon is refused.
   *Reason:* the client's roster shows 12 characters of a callsign. Players chose their callsigns on the original service; a server that adds a way to choose one, at registration or after logon, may allow mixed case.
 
 ## 4. The lobby
@@ -37,6 +39,7 @@ Answer the logon script ([Part I §5.1](protocol.md#51-logon)) as follows:
 - When the client sends `M 1380;3` (the GO button), the server sends `05 "PRESS RETURN\r"` and waits up to 5 s for the version reply. It logs the reply and **never refuses** a version, since only one exists.
 - It then sends `05 "A\r"` (the Chamber buttons) and a welcome line.
 - `/QUIT` sends `05 "B\r"` (the GEnie buttons) and the `*` prompt. `BYE` at that prompt closes the connection.
+- A player who types nothing in the Chamber for an hour (15 minutes for a guest) is disconnected.
 
 ### 4.2 Commands
 
@@ -64,6 +67,7 @@ Answer the logon script ([Part I §5.1](protocol.md#51-logon)) as follows:
 - A plain line is sent to every other player in the Chamber, not to players in a game, and not back to the sender, whose client has already displayed it.
 - Every byte outside `0x20`–`0x7e` is removed before relaying. A `0x01` or `0x05` would put the receivers' clients into command mode.
 - Relayed lines are kept short, well within the 512-byte command-line limit.
+- Chat is rate-limited per connection and per address. A receiver whose connection has fallen far behind (a modem reads about 1 KB/s) misses chat lines rather than being disconnected; game messages are never skipped. *Tested with scripted clients.*
 
 ### 4.4 Colors
 
@@ -235,7 +239,7 @@ The game's README promises that a player who loses the connection may reconnect 
 3. **Eligibility.** A drop is **ineligible**, a "fight about to be lost", if, in the 20 s before it, the pod was named in a non-teammate's Hit Report, was sent Damage, or had an enemy shot, grenade or air strike fired within 600 ft of it (the client's own NPC targeting range). Power is **not** used: power changes from jumps and crashes look like hits, and a pod at full power can still be losing.
    - An ineligible drop is treated as a **death at the moment of the drop**: payouts and Kill Notices to the hitters, Destroy Entity to every other client, bounty zeroed, marker −1 saved, modules lost. Then Remove Entity. **No place is held:** a `/RESUME` is refused with a message saying why, and no team slot is reserved.
    - Any other drop is eligible: it gets only Remove Entity, and its place is held.
-4. **Time limits.** The player has 10 minutes from the drop to reconnect and enter the Chamber. Once they enter the Chamber, they have 3 minutes to type `/RESUME` and rejoin the game (as described in the manual). During the 10 minutes and the 3 minutes, the team slot is reserved and the city's game keeps running, even if no one else is in it. `/PLAY` gives the place up.
+4. **Time limits.** The player has 10 minutes from the drop to reconnect and enter the Chamber. Once they enter the Chamber, they have 3 minutes to type `/RESUME` and rejoin the game (as described in the manual). During the 10 minutes and the 3 minutes, the team slot is reserved and the city's game keeps running, even if no one else is in it. `/PLAY` gives the place up. At most 2 places are held for one address at a time.
 5. **Restore.** The Chamber launch for the held city, Start Session with the held team and a fresh pod id ([Part I §8.10](protocol.md#810-h--remove-entity)), Bay Status (saved bays and marker), Score Status (held SCORE and multiplier, saved bay points, no multiplier floor), and once the pod has landed, one module install per held module, highest level first. Bounty and position are not restored: the pod drops at its home corner with bounty 0.
 
 **The confirmed loadout** is kept for every player as a ledger ([Part I §9.3.4](protocol.md#934-the-installed-loadout)): each install is pending until a Pod State's weight includes it, and dropped if a couple of reports match without it; Module Operation 1 and 4 remove modules; a death clears them. A mismatch with the reported weight is logged.
@@ -245,12 +249,12 @@ The game's README promises that a player who loses the connection may reconnect 
 ## 14. Logistics
 
 - **One guppy per team**, id 250 + team, waiting at the center of its home corner block.
-- **One job at a time.** Orders queue. A tower order arriving when four jobs of any kind (towers, modules, Air Support) are already waiting is refused with Tower Order Reply 2 ("mission queue full", refunded).
+- **One job at a time.** Orders queue. A tower order arriving when four jobs of any kind (towers, modules, Air Support) are already waiting is refused with Tower Order Reply 2 ("mission queue full", refunded). Module orders and Air Support are refused, as a safety bound, only at 32 waiting jobs.
 - Towers are spawned with `carrier` 0 and fall from the ordered point.
 - A tower order outside the city is not refused. The tower is delivered, but a tower outside the city claims no block ([Part I §8.15](protocol.md#815-m--spawn-tower-and-tower-order)).
 - **Priority** orders go ahead of every waiting non-priority order of that team, behind earlier priority orders. The job in flight is never displaced.
 - After each job, the guppy flies home if nothing is waiting. An order arriving while it flies home waits until it is home: the guppy is never redirected mid-leg.
-- **No timeout.** A guppy waits for its Leg Arrived however long it takes. With no client connected nothing reports, and the job waits. A failsafe would be a reasonable addition.
+- **No timeout.** A guppy waits for its Leg Arrived however long it takes. With no client connected nothing reports, and the job waits. The operator has a failsafe that sends a stranded guppy home.
 - The manual's delivery rules ([Part I §9.4.3](protocol.md#943-delivery-as-the-manual-describes-it)) are applied in full.
 - "Within one block" in module effects means within 600 ft in a straight line. Towers are located by the point they were ordered at, since the client never reports where a tower came to rest.
 - A server without logistics would answer every tower order with Tower Order Reply 3 ("no relay towers").
@@ -297,7 +301,7 @@ Each city has a number of resident Sentinels, placed one per block, outside the 
 
 ## 18. Loose modules
 
-- A delivered module is spawned 100 ft above the point with velocity (0, 0, 0).
+- A delivered module is spawned 100 ft above the orderer and 20 ft ahead of its facing at the time of the order (the manual's "about 100 ft above and 20 ft ahead"), with velocity (0, 0, 0).
 - An ejected module is spawned 15 ft up with a small push (±1 horizontally, 1 upward).
 - A picked-up module is destroyed on the other clients with Module Operation subtype 2.
 
