@@ -2,7 +2,7 @@
 
 **Version 1.0 — Part I of III.** Part II is the [*Server Policy*](server-policy.md); Part III is the [*Implementer's Guide*](implementers-guide.md).
 
-> CyberStrike was published by Simutronics and played on the GEnie online service. This specification is an independent work. It is not affiliated with, endorsed by, or derived from materials of Simutronics, GEnie or their successors. It was derived from analysis and observation of the original game client, and from the game's printed manual. All trademarks belong to their owners.
+> CyberStrike was published by Simutronics and played on GEnie, America Online and play.net. This specification is an independent work, not affiliated with or endorsed by Simutronics, GEnie, America Online or their successors. It describes the protocol for interoperability, from observation and analysis of the original game client and from the game's printed manual, and contains none of their code, art or text. CyberStrike is a trademark of its owner; other trademarks belong to their owners.
 
 ---
 
