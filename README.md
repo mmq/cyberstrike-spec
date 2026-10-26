@@ -10,8 +10,9 @@ so that a new server can be written without them.
 | I | [`protocol.md`](protocol.md) | what the client does and requires: transport, every message, the game rules the client implements. |
 | II | [`server-policy.md`](server-policy.md) | what the original client leaves up to the server, with a suggested way to handle each. Not normative. |
 | III | [`implementers-guide.md`](implementers-guide.md) | practical advice for building a server, starting with a minimal one. |
+| IV | [`city-format.md`](city-format.md) | the format of the client's map files, for making new maps. A server does not need it. |
 
-Sections are cited as `I §n`, `II §n` or `III §n`: the part, then the section number.
+Sections are cited as `I §n`, `II §n`, `III §n` or `IV §n`: the part, then the section number.
 
 It was used to build [OpenCS](https://github.com/mmq/opencs-server), a complete server for the game.
 

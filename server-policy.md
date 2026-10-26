@@ -1,6 +1,6 @@
 # CyberStrike Server Policy
 
-**Version 1.0 — Part II of III.**
+**Version 1.0 — Part II of IV.**
 
 ## 1. About this document
 

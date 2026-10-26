@@ -1,6 +1,6 @@
 # CyberStrike Server Protocol Specification
 
-**Version 1.0 — Part I of III.** Part II is the [*Server Policy*](server-policy.md); Part III is the [*Implementer's Guide*](implementers-guide.md).
+**Version 1.0 — Part I of IV.** Part II is the [*Server Policy*](server-policy.md); Part III is the [*Implementer's Guide*](implementers-guide.md); Part IV is the [*Map File Format*](city-format.md).
 
 > CyberStrike was published by Simutronics and played on GEnie, America Online and play.net. This specification is an independent work, not affiliated with or endorsed by Simutronics, GEnie, America Online or their successors. It describes the protocol for interoperability, from observation and analysis of the original game client and from the game's printed manual, and contains none of their code, art or text. CyberStrike is a trademark of its owner; other trademarks belong to their owners.
 
@@ -25,7 +25,7 @@ The client is three 16-bit DOS programs, plus map files, all shipped with the ga
 | `CS.COM` | resident serial driver; stays loaded across both phases |
 | `GAME.FUN` | the **Chamber** program: logon, lobby, launch. Version 1.05 |
 | `POD.FUN` | the **game engine**. Version 1.50 |
-| `C1.CBD`–`C3.CBD` | city map files |
+| `C1.CBD`–`C3.CBD` | city map files; their format is Part IV |
 
 The client reaches the server through a serial port. Only one version of the client is known to exist.
 
@@ -457,7 +457,7 @@ server: 05 "C\r"                 only after /GO 0
 | 2 | the map file's header does not match `<rev>` |
 | 3 | not enough memory |
 
-- **`<map>` names a file and nothing else.** It selects the client's `C<map>.CBD`. Any number works if that file exists on the client, including generated maps; a missing file is reported as `/GO 1` before launch. A map file must be valid (correct checksum, geometry in every block) to load. *Inferred.*
+- **`<map>` names a file and nothing else.** It selects the client's `C<map>.CBD`. Any number works if that file exists on the client, including generated maps; a missing file is reported as `/GO 1` before launch. A map file must be valid (correct checksum, geometry in every block) to load; Part IV specifies the format. *Inferred.*
 - **`<rev>` MUST be a single digit, 0–9.** The client writes `<rev>` as two digits after the text `CSCBD2` and compares the result with the map file's 8-byte header, but only its first 7 bytes, so only the tens digit of `<rev>` is checked. The shipped maps' headers have 0 there, so any `<rev>` from 0 to 9 passes, and 10 or more gives `/GO 2`. *Inferred.*
 - The map number reaches the game engine through the resident driver, not the connection, so the server does not repeat it after launch.
 

@@ -1,6 +1,6 @@
 # CyberStrike Implementer's Guide
 
-**Version 1.0 — Part III of III.**
+**Version 1.0 — Part III of IV.**
 
 Practical advice for building a CyberStrike server from the [Protocol Specification](protocol.md) (Part I). Section references are to Part I unless marked "Part II" (the [Server Policy](server-policy.md)), and each is a link.
 
